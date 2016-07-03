@@ -1,268 +1,195 @@
 "use strict";
 
 const debug = require('debug')(require('./package').name),
-      Peripheral = require('noble/lib/peripheral'),
       State = require('./lib/state'),
-      noble = require('./lib/noble'),
+      NobleDevice = require('noble-device'),
       util = require('./lib/util'),
-      assert = util.assert,
-      isOn = util.isOn;
+      isOn = util.isOn,
+      assertFunction = util.assertFunction;
 
-const advertisementName = 'MFBOLT',
-      lightCharacteristicUUID = 'fff1',
-      on = 'CLTMP 3200,100',
-      off = 'CLTMP 3200,0',
-      retryAfter = 500;
+const SERVICE_UUID = 'fff0',
+      CONTROL_UUID = 'fff1',
+      EFFECT_UUID = 'fffc',
+      ADVERTISEMENT_NAME = 'MFBOLT',
+      ON = 'CLTMP 3200,100',
+      OFF = 'CLTMP 3200,0',
+      GRADUAL_MODE = 'TS',
+      NON_GRADUAL_MODE = 'TE',
+      DEFAULT_COLOR = 'DF';
 
-
-class Bolt {
-
-  constructor(peripheral) {
-    assert(peripheral instanceof Peripheral, 'Bolt : first argument should be instance of Peripheral');
-    this.id = peripheral.uuid;
-    this.peripheral = peripheral;
-    this.state = new State();
-    this.connected = false;
-    this.peripheral.on('disconnect', () => {
-      debug(`disconnected: ${this.peripheral.uuid}`);
-      this.connected = false;
-      this.light = undefined;
-      Bolt.remove(this.id);
-    });
-  }
-
-  getLight(done) {
-    debug('getting light');
-    if (this.light) {
-      debug('got cached light');
-      return done(undefined, this.light);
-    } else if (this.gettingLight) {
-      debug('already getting light...');
-      setTimeout(() => {
-        this.getLight(done);
-      }, retryAfter);
-    } else {
-      this.gettingLight = true;
-      this.peripheral.discoverAllServicesAndCharacteristics((error, services, characteristics) => {
-        this.gettingLight = false;
-        debug('got light');
-        var characteristic;
-        for (var i = 0; i < characteristics.length; i ++) {
-          characteristic = characteristics[i];
-          if(characteristic.uuid == lightCharacteristicUUID) {
-            this.light = characteristic;
-          }
-        }
-        assert(characteristic, 'Bolt#getLight : could not find light characteristic');
-        done(error, this.light);
-      });
-    }
-  }
-
-  connect(done) {
-    assert(typeof done === 'function', 'Bolt#connect : first argument should be a function');
-
-    debug('connecting');
-    if (this.connected) {
-      debug('already connected');
-      this.getLight(done);
-    } else if (this.connecting) {
-      debug('already connecting...');
-      setTimeout(() => {
-        this.connect(done);
-      }, retryAfter);
-    } else {
-      this.connecting = true;
-      this.peripheral.connect((error) => {
-        this.connecting = false;
-        this.connected = true;
-        debug(`connected: ${this.peripheral.uuid}`);
-        this.getLight(done);
-      });
-    }
-    return this;
-  }
-
-  disconnect(done) {
-    assert(typeof done === 'function', 'Bolt#disconnect : first argument should be a function');
-    debug('disconnecting');
-    if (!this.connected) {
-      debug('already disconnected');
-      return done();
-    }
-    this.peripheral.disconnect((error) => {
-      this.connected = false;
-      this.light = undefined;
-      debug('disconnected');
-      done(error);
-    });
-    return this;
-  }
-
-  get(done) {
-    assert(typeof done === 'function', 'Bolt#get : first argument should be a function');
-    assert(this.connected, 'Bolt#get : bulb is not connected.');
-    debug('reading');
-    this.getLight((error, light) => {
-      light.read((error, buffer) => {
-        this.state.buffer = buffer;
-        debug('read: ', this.state.buffer.toString());
-        done(error, this.state.value);
-      });
-    });
-    return this;
-  }
-
-  set(value, done) {
-    assert(typeof done === 'function', 'Bolt#set : second argument should be a function');
-    assert(this.connected, 'Bolt#set : bulb is not connected.');
-    this.state.value = value;
-    this.getLight((error, light) => {
-      debug(`set light: ${light} with value: ${this.state.buffer.toString()}`);
-      light.write(this.state.buffer, undefined, done);
-    });
-    return this;
-  }
-
-  getRGBA(done) {
-    assert(typeof done === 'function', 'Bolt#getRGBA : first argument should be a function');
-    assert(this.connected, 'Bolt#getRGBA : bulb is not connected.');
-    this.get((error) => {
-      done(error, this.state.rgba);
-    });
-    return this;
-  }
-
-  setRGBA(rgba, done) {
-    assert(typeof done === 'function', 'Bolt#setRGBA : second argument should be a function');
-    assert(this.connected, 'Bolt#setRGBA : bulb is not connected.');
-    this.state.rgba = rgba;
-    return this.set(this.state.value, done);
-  }
-
-  getHue(done) {
-    assert(typeof done === 'function', 'Bolt#getHue : first argument should be a function');
-    assert(this.connected, 'Bolt#getHue : bulb is not connected.');
-    this.get((error) => {
-      done(error, this.state.hue);
-    });
-    return this;
-  }
-
-  setHue(hue, done) {
-    assert(typeof done === 'function', 'Bolt#setHue : second argument should be a function');
-    assert(this.connected, 'Bolt#setHue : bulb is not connected.');
-    this.state.hue = hue;
-    return this.set(this.state.value, done);
-  }
-
-  getSaturation(done) {
-    assert(typeof done === 'function', 'Bolt#getSaturation : first argument should be a function');
-    assert(this.connected, 'Bolt#getSaturation : bulb is not connected.');
-    this.get((error) => {
-      done(error, this.state.saturation);
-    });
-    return this;
-  }
-
-  setSaturation(saturation, done) {
-    assert(typeof done === 'function', 'Bolt#setSaturation : second argument should be a function');
-    assert(this.connected, 'Bolt#setSaturation : bulb is not connected.');
-    this.state.saturation = saturation;
-    return this.set(this.state.value, done);
-  }
-
-  getBrightness(done) {
-    assert(typeof done === 'function', 'Bolt#getBrightness : first argument should be a function');
-    assert(this.connected, 'Bolt#getBrightness : bulb is not connected.');
-    this.get((error) => {
-      done(error, this.state.brightness);
-    });
-    return this;
-  }
-
-  setBrightness(brightness, done) {
-    assert(typeof done === 'function', 'Bolt#setBrightness : second argument should be a function');
-    assert(this.connected, 'Bolt#setBrightness : bulb is not connected.');
-    this.state.brightness = brightness;
-    return this.set(this.state.value, done);
-  }
-
-  getState(done) {
-    assert(typeof done === 'function', 'Bolt#getState : first argument should be a function');
-    assert(this.connected, 'Bolt#getState : bulb is not connected.');
-    this.get((error, value) => {
-      done(error, isOn(value));
-    });
-  }
-
-  setState(state, done) {
-    return this.set(state ? on : off, done);
-  }
-
-  off(done) {
-    return this.set(off, done);
-  }
-
-  on(done) {
-    return this.set(on, done);
-  }
-
-  static discover(done, uuids) {
-    noble.on('discover', (peripheral) => {
-      if (peripheral.advertisement.localName === advertisementName) {
-        if (uuids !== undefined) {
-          assert(uuids instanceof Array, 'Bolt.discover : second optional argument should be an array');
-          if (uuids.indexOf(peripheral.uuid) == -1) {
-            debug(`Bolt ${peripheral.uuid} not part of requested uuids`);
-            return;
-          }
-        }
-        if (Bolt.get(peripheral.uuid)) {
-          return;
-        }
-        debug(`Bolt ${peripheral.uuid} created`);
-        const bolt = new Bolt(peripheral);
-        Bolt.bolts.push(bolt);
-        if (done) {
-          assert(typeof done === 'function', 'Bolt.discover : first argument should be a function');
-          done(bolt);
-        }
-      }
-    });
-
-    noble.on('stateChange', (state) => {
-      debug(`State changed to ${state}`);
-      if (state === 'poweredOn') {
-        noble.startScanning([], true);
-      } else {
-        noble.stopScanning();
-      }
-    });
-
-    noble.on('warning', (warning) => {
-      debug(`Warning sent: ${warning}`)
-    });
-  }
-
-  static get(id) {
-    return Bolt.bolts.filter((bolt, index) => {
-      return bolt.id === id;
-    })[0];
-  }
-
-  static remove(id) {
-    const bolt = Bolt.get(id);
-    const index = Bolt.bolts.indexOf(bolt),
-          found = index >= 0;
-    if (found) {
-      Bolt.bolts.splice(index, 1);
-    }
-    return found;
-  }
-
+const Bolt = function(peripheral) {
+  NobleDevice.call(this, peripheral);
+  this.state = new State();
+  this.id = peripheral.id;
 }
 
+Bolt.SCAN_UUIDS = [SERVICE_UUID]
+
+Bolt.is = function(peripheral) {
+  const localName = peripheral.advertisement.localName;
+  return localName === undefined || localName === ADVERTISEMENT_NAME;
+};
+
 Bolt.bolts = [];
+
+NobleDevice.Util.inherits(Bolt, NobleDevice);
+
+Bolt.prototype.onDisconnect = function () {
+  debug(`disconnected: ${this.id}`);
+  Bolt.remove(this.id);
+};
+
+// Bolt.prototype.setGradualMode = function (gradualMode, done) {
+//   this.writeServiceStringCharacteristic(EFFECT_UUID, gradualMode ? TS : TE, done);
+// };
+
+Bolt.prototype.get = function (done) {
+  assertFunction(done);
+  debug(`getting characteristic ${CONTROL_UUID} of service ${SERVICE_UUID}`);
+  this.readDataCharacteristic(SERVICE_UUID, CONTROL_UUID, (error, buffer) => {
+    debug(`got data ${buffer.toString()}`);
+    this.state.buffer = buffer;
+    done(error, this.state.value);
+  });
+
+  return this;
+};
+
+Bolt.prototype.set = function (value, done) {
+  assertFunction(done);
+  this.state.value = value;
+  debug(`setting characteristic ${CONTROL_UUID} of service ${SERVICE_UUID} with data ${this.state.buffer}`);
+  this.writeDataCharacteristic(SERVICE_UUID, CONTROL_UUID, this.state.buffer, done);
+  return this;
+};
+
+Bolt.prototype.getRGBA = function (done) {
+  assertFunction(done);
+  debug(`getting rgba`);
+  this.get((error) => {
+    debug(`got rgba ${this.state.rgba}`);
+    done(error, this.state.rgba);
+  });
+  return this;
+};
+
+Bolt.prototype.setRGBA = function (rgba, done) {
+  assertFunction(done);
+  debug(`setting rgba with ${rgba}`);
+  this.state.rgba = rgba;
+  return this.set(this.state.value, done);
+};
+
+Bolt.prototype.getHue = function (done) {
+  assertFunction(done);
+  debug(`getting hue`);
+  this.get((error) => {
+    debug(`got hue ${this.state.hue}`);
+    done(error, this.state.hue);
+  });
+  return this;
+};
+
+Bolt.prototype.setHue = function (hue, done) {
+  assertFunction(done);
+  debug(`setting hue with ${hue}`);
+  this.state.hue = hue;
+  return this.set(this.state.value, done);
+};
+
+Bolt.prototype.getSaturation = function (done) {
+  assertFunction(done);
+  debug(`getting saturation`);
+  this.get((error) => {
+    debug(`got saturation ${this.state.saturation}`);
+    done(error, this.state.saturation);
+  });
+  return this;
+};
+
+Bolt.prototype.setSaturation = function (saturation, done) {
+  assertFunction(done);
+  debug(`setting saturation with ${saturation}`);
+  this.state.saturation = saturation;
+  return this.set(this.state.value, done);
+};
+
+Bolt.prototype.getBrightness = function (done) {
+  assertFunction(done);
+  debug(`getting brightness`);
+  this.get((error) => {
+    debug(`got brightness ${this.state.brightness}`);
+    done(error, this.state.brightness);
+  });
+  return this;
+};
+
+Bolt.prototype.setBrightness = function (brightness, done) {
+  assertFunction(done);
+  debug(`setting brightness with ${brightness}`);
+  this.state.brightness = brightness;
+  return this.set(this.state.value, done);
+};
+
+Bolt.prototype.getState = function (done) {
+  assertFunction(done);
+  debug(`getting state`);
+  this.get((error) => {
+    const state = isOn(this.state.value);
+    debug(`got state ${state}`);
+    done(error, state);
+  });
+};
+
+Bolt.prototype.setState = function (state, done) {
+  assertFunction(done);
+  debug(`setting state with ${state}`);
+  return this.set(state ? ON : OFF, done);
+};
+
+Bolt.prototype.toggleOff = function (done) {
+  assertFunction(done);
+  return this.set(OFF, done);
+};
+
+Bolt.prototype.toggleOn = function (done) {
+  assertFunction(done);
+  return this.set(ON, done);
+};
+
+function discovered (bolt) {
+  debug(`discovered: ${bolt.id}`);
+  bolt.connectAndSetup(() => {
+    debug(`connected: ${bolt.id}`);
+    Bolt.bolts.push(bolt)
+  });
+}
+
+Bolt.start = function() {
+  clearTimeout(Bolt.timer);
+  Bolt.stopDiscoverAll(discovered);
+  Bolt.timer = setTimeout(() => {
+    Bolt.start();
+  }, 15000);
+  Bolt.discoverAll(discovered);
+};
+
+Bolt.get = function(id) {
+  return Bolt.bolts.filter((bolt, index) => {
+    return bolt.id === id;
+  })[0];
+};
+
+Bolt.remove = function(id) {
+  const bolt = Bolt.get(id);
+  const index = Bolt.bolts.indexOf(bolt),
+        found = index >= 0;
+  if (found) {
+    debug(`removed: ${bolt.id}`);
+    Bolt.bolts.splice(index, 1);
+    Bolt.start();
+  }
+  return found;
+};
 
 module.exports = Bolt;
