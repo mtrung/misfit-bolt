@@ -46,6 +46,11 @@ NobleDevice.Util.inherits(Bolt, NobleDevice);
  * Public
  */
 
+/**
+ * Retrieve RGBA values of the bolt
+ * @param {Bolt~numbersGetterCallback} done - completion callback
+ */
+
 Bolt.prototype.getRGBA = function (done) {
   assertFunction(done);
   debug(`getting rgba`);
@@ -55,6 +60,11 @@ Bolt.prototype.getRGBA = function (done) {
   });
 };
 
+/**
+ * Set RGBA values of the bolt
+ * @param {number[]} rgba - Red / Green / Blue / Alpha values
+ * @param {Bolt~simpleCallback} done - completion callback
+ */
 Bolt.prototype.setRGBA = function (rgba, done) {
   assertFunction(done);
   debug(`setting rgba with ${rgba}`);
@@ -62,6 +72,10 @@ Bolt.prototype.setRGBA = function (rgba, done) {
   return this._writeStateValue(this.state.value, done);
 };
 
+/**
+ * Retrieve Hue value of the bolt
+ * @param {Bolt~numberGetterCallback} done - completion callback
+ */
 Bolt.prototype.getHue = function (done) {
   assertFunction(done);
   debug(`getting hue`);
@@ -71,6 +85,11 @@ Bolt.prototype.getHue = function (done) {
   });
 };
 
+/**
+ * Set Hue value of the bolt
+ * @param {number} hue - Hue value
+ * @param {Bolt~simpleCallback} done - completion callback
+ */
 Bolt.prototype.setHue = function (hue, done) {
   assertFunction(done);
   debug(`setting hue with ${hue}`);
@@ -78,6 +97,10 @@ Bolt.prototype.setHue = function (hue, done) {
   return this._writeStateValue(this.state.value, done);
 };
 
+/**
+ * Retrieve Saturation value of the bolt
+ * @param {Bolt~numberGetterCallback} done - completion callback
+ */
 Bolt.prototype.getSaturation = function (done) {
   assertFunction(done);
   debug(`getting saturation`);
@@ -87,6 +110,11 @@ Bolt.prototype.getSaturation = function (done) {
   });
 };
 
+/**
+ * Set Saturation value of the bolt
+ * @param {number} saturation - Saturation value
+ * @param {Bolt~simpleCallback} done - completion callback
+ */
 Bolt.prototype.setSaturation = function (saturation, done) {
   assertFunction(done);
   debug(`setting saturation with ${saturation}`);
@@ -94,6 +122,10 @@ Bolt.prototype.setSaturation = function (saturation, done) {
   return this._writeStateValue(this.state.value, done);
 };
 
+/**
+ * Retrieve Brightness value of the bolt
+ * @param {Bolt~numberGetterCallback} done - completion callback
+ */
 Bolt.prototype.getBrightness = function (done) {
   assertFunction(done);
   debug(`getting brightness`);
@@ -103,6 +135,11 @@ Bolt.prototype.getBrightness = function (done) {
   });
 };
 
+/**
+ * Set Brightness value of the bolt
+ * @param {number} brightness - Brightness value
+ * @param {Bolt~simpleCallback} done - completion callback
+ */
 Bolt.prototype.setBrightness = function (brightness, done) {
   assertFunction(done);
   debug(`setting brightness with ${brightness}`);
@@ -110,6 +147,10 @@ Bolt.prototype.setBrightness = function (brightness, done) {
   return this._writeStateValue(this.state.value, done);
 };
 
+/**
+ * Retrieve State value of the bolt
+ * @param {Bolt~booleanGetterCallback} done - completion callback
+ */
 Bolt.prototype.getState = function (done) {
   assertFunction(done);
   debug(`getting state`);
@@ -120,12 +161,21 @@ Bolt.prototype.getState = function (done) {
   });
 };
 
+/**
+ * Set State value of the bolt
+ * @param {boolean} state - State value
+ * @param {Bolt~simpleCallback} done - completion callback
+ */
 Bolt.prototype.setState = function (state, done) {
   assertFunction(done);
   debug(`setting state with ${state}`);
   return this._writeStateValue(state ? ON : OFF, done);
 };
 
+/**
+ * Retrieve Gradual Mode value of the bolt
+ * @param {Bolt~booleanGetterCallback} done - completion callback
+ */
 Bolt.prototype.getGradualMode = function (done) {
   assertFunction(done);
   debug(`getting gradual mode from state, got ${this.state.gradualMode}`);
@@ -133,6 +183,11 @@ Bolt.prototype.getGradualMode = function (done) {
   return this;
 };
 
+/**
+ * Set Gradual Mode value of the bolt
+ * @param {boolean} gradualMode - Gradual Mode value
+ * @param {Bolt~simpleCallback} done - completion callback
+ */
 Bolt.prototype.setGradualMode = function (gradualMode, done) {
   assertFunction(done);
   debug(`setting gradual mode with ${gradualMode}`);
@@ -141,6 +196,10 @@ Bolt.prototype.setGradualMode = function (gradualMode, done) {
   return this;
 };
 
+/**
+ * Retrieve Name value of the bolt
+ * @param {Bolt~stringGetterCallback} done - completion callback
+ */
 Bolt.prototype.getName = function (done) {
   assertFunction(done);
   debug(`getting name`);
@@ -151,6 +210,11 @@ Bolt.prototype.getName = function (done) {
   });
 };
 
+/**
+ * Set Name value of the bolt
+ * @param {string} name - Name value
+ * @param {Bolt~simpleCallback} done - completion callback
+ */
 Bolt.prototype.setName = function (name, done) {
   assertFunction(done);
   debug(`setting name with ${name}`);
@@ -200,12 +264,19 @@ Bolt.prototype._readStateValue = function (done) {
 Bolt.prototype._writeStateValue = function (value, done) {
   assertFunction(done);
   this.state.value = value;
-  debug(`writing state value with date ${value}`);
-  this._write(CONTROL_UUID, this.state.buffer, () => {
-    this._delayedPersist();
-    done();
-  });
+  this._delayedWrite();
+  done();
   return this;
+};
+
+Bolt.prototype._delayedWrite = function () {
+  clearTimeout(this.writeTimer);
+  this.writeTimer = setTimeout(() => {
+    debug(`writing state value with date ${this.state.value}`);
+    this._write(CONTROL_UUID, this.state.buffer, () => {
+      this._delayedPersist();
+    });
+  }, DELAYED_PERSIST_MS);
 };
 
 Bolt.prototype._delayedPersist = function () {
@@ -221,10 +292,13 @@ Bolt.prototype._delayedPersist = function () {
  * Static
  */
 
+Bolt.loopCount = 0;
 Bolt.bolts = [];
 Bolt.SCAN_UUIDS = [SERVICE_UUID]
 
 Bolt.init = function() {
+  this.loopCount += 1
+  debug(`loop: ${Bolt.loopCount}`);
   clearTimeout(Bolt.timer);
   Bolt.stopDiscoverAll(Bolt.setup);
   Bolt.timer = setTimeout(() => {
@@ -269,3 +343,43 @@ Bolt.is = function(peripheral) {
  */
 
 module.exports = Bolt;
+
+
+/**
+ * Callbacks documentation
+ */
+
+/**
+ * Simple completion callback
+ * @callback Bolt~simpleCallback
+ * @param {?error} Error while performing async operation
+ */
+
+/**
+ * Numbers getter completion callback
+ * @callback Bolt~numbersGetterCallback
+ * @param {?error} Error while performing async operation
+ * @param {?number[]} Value retrieved
+ */
+
+/**
+ * Number getter completion callback
+ * @callback Bolt~numberGetterCallback
+ * @param {?error} Error while performing async operation
+ * @param {?number} Value retrieved
+ */
+
+/**
+ * Boolean getter completion callback
+ * @callback Bolt~booleanGetterCallback
+ * @param {?error} Error while performing async operation
+ * @param {?boolean} Value retrieved
+ */
+
+/**
+ * String getter completion callback
+ * @callback Bolt~stringGetterCallback
+ * @param {?error} Error while performing async operation
+ * @param {?string} Value retrieved
+ */
+ 

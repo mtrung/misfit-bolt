@@ -444,6 +444,10 @@ Bolt.discover(function(bolt) {
 
 ## TODO
 - CLI tool
+- FIX ON / OFF State
+- Finish documentation
+- Figure out if possible to discover pre-existing state
+- Figure out how to remember state accross restarts
 
 ## Notes
 - Inspired by [fayep's Python implementation](https://github.com/fayep/bolt)
