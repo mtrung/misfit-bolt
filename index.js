@@ -25,7 +25,7 @@ const ADVERTISEMENT_NAME = 'MFBOLT',
       OFF = 'CLTMP 3200,0',
       GRADUAL_MODE = 'TS',
       NON_GRADUAL_MODE = 'TE',
-      DEFAULT_COLOR = 'DF',
+      PERSIST_DEFAULT_COLOR = 'DF',
       DELAYED_PERSIST_MS = 1000;
 
 
@@ -69,6 +69,32 @@ Bolt.prototype.setRGBA = function (rgba, done) {
   assertFunction(done);
   debug(`setting rgba with ${rgba}`);
   this.state.rgba = rgba;
+  return this._writeStateValue(this.state.value, done);
+};
+
+/**
+ * Retrieve HSB values of the bolt
+ * @param {Bolt~numbersGetterCallback} done - completion callback
+ */
+
+Bolt.prototype.getHSB = function (done) {
+  assertFunction(done);
+  debug(`getting hsb`);
+  return this._readStateValue((error) => {
+    debug(`got hsb ${this.state.hsb}`);
+    done(error, this.state.hsb);
+  });
+};
+
+/**
+ * Set HSB values of the bolt
+ * @param {number[]} rgba - Red / Green / Blue / Alpha values
+ * @param {Bolt~simpleCallback} done - completion callback
+ */
+Bolt.prototype.setHSB = function (hsb, done) {
+  assertFunction(done);
+  debug(`setting rgba with ${hsb}`);
+  this.state.hsb = hsb;
   return this._writeStateValue(this.state.value, done);
 };
 
@@ -253,7 +279,6 @@ Bolt.prototype._readStateValue = function (done) {
   assertFunction(done);
   debug(`reading state value`);
   this._read(CONTROL_UUID, (error, buffer) => {
-    debug(`got data ${buffer}`);
     this.state.buffer = buffer;
     done(error, this.state.value);
   });
@@ -282,8 +307,8 @@ Bolt.prototype._delayedWrite = function () {
 Bolt.prototype._delayedPersist = function () {
   clearTimeout(this.persistTimer);
   this.persistTimer = setTimeout(() => {
-    debug(`setting characteristic ${EFFECT_UUID} of service ${SERVICE_UUID} with data ${DEFAULT_COLOR}`);
-    this.writeDataCharacteristic(SERVICE_UUID, EFFECT_UUID, new Buffer(DEFAULT_COLOR));
+    debug(`setting characteristic ${EFFECT_UUID} of service ${SERVICE_UUID} with data ${PERSIST_DEFAULT_COLOR}`);
+    this.writeDataCharacteristic(SERVICE_UUID, EFFECT_UUID, new Buffer(PERSIST_DEFAULT_COLOR));
   }, DELAYED_PERSIST_MS);
 };
 
@@ -310,8 +335,10 @@ Bolt.init = function() {
 Bolt.setup = function (bolt) {
   debug(`discovered: ${bolt.id}`);
   bolt.connectAndSetup(() => {
-    debug(`connected: ${bolt.id}`);
-    Bolt.bolts.push(bolt)
+    bolt.getRGBA(() => {
+      debug(`ready: ${bolt.id}`);
+      Bolt.bolts.push(bolt)
+    });
   });
 };
 
