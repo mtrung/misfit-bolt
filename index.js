@@ -320,8 +320,11 @@ Bolt.prototype._readStateValue = function (done) {
   assertFunction(done);
   debug(`reading state value`);
   this._read(CONTROL_UUID, (error, buffer) => {
+    if (error) {
+      return done(error);
+    }
     this.state.buffer = buffer;
-    done(error, this.state.value);
+    done(undefined, this.state.value);
   });
 
   return this;
