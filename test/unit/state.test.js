@@ -5,9 +5,9 @@
 const sinon = require('sinon'),
       chai = require('chai'),
       proxyquire = require('proxyquire'),
-      Color = require('./mocks/color');
+      Color = require('../mocks/color');
 
-const State = proxyquire('../lib/state', {
+const State = proxyquire('../../lib/state', {
   'color': Color
 });
 
@@ -133,7 +133,7 @@ describe('State', () => {
       });
 
       it('correctly sets the state value', () => {
-        chai.expect(state.value).to.equal('255,255,255,100')
+        chai.expect(state.value).to.equal('255,255,255,100');
       });
 
     });

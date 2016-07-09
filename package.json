@@ -18,8 +18,11 @@
     "url": "https://github.com/flochtililoch/misfit-bolt.git"
   },
   "scripts": {
-    "lint": "./node_modules/.bin/jshint *.js **/*.js",
-    "test": "./node_modules/.bin/mocha *.js **/*.js",
+    "lint": "./node_modules/.bin/jshint *.js lib/*.js test/*/*.js",
+    "test": "./node_modules/.bin/mocha *.js test/**/*.js",
+    "doc-lint": "./node_modules/.bin/documentation lint",
+    "doc-gen": "./node_modules/.bin/documentation readme --section \"API\"",
+    "all": "npm run lint && npm run doc-lint && npm run doc-gen && npm run test",
     "patch-release": "npm version patch && npm publish && git push --follow-tags",
     "minor-release": "npm version minor && npm publish && git push --follow-tags",
     "major-release": "npm version major && npm publish && git push --follow-tags"
@@ -37,9 +40,8 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "jsdoc": "^3.4.0",
+    "documentation": "^4.0.0-beta8",
     "jshint": "^2.9.2",
-    "jslog": "^1.0.4",
     "mocha": "^2.5.3",
     "proxyquire": "^1.7.9",
     "sinon": "^1.17.4"

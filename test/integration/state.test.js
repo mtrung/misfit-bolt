@@ -3,7 +3,7 @@
 "use strict";
 
 const chai = require('chai'),
-      State = require('../lib/state');
+      State = require('../../lib/state');
 
 describe('State', () => {
 
@@ -20,65 +20,65 @@ describe('State', () => {
 
       // Red
       it('throws error when setting red to -1', () => {
-        chai.expect(() => { state.red = -1; }).to.throw('red should be an integer between 0 and 255. got -1.')
+        chai.expect(() => { state.red = -1; }).to.throw('red should be an integer between 0 and 255. got -1.');
       });
 
       it('throws error when setting red to 256', () => {
-        chai.expect(() => { state.red = 256; }).to.throw('red should be an integer between 0 and 255. got 256.')
+        chai.expect(() => { state.red = 256; }).to.throw('red should be an integer between 0 and 255. got 256.');
       });
 
       // Green
       it('throws error when setting green to -1', () => {
-        chai.expect(() => { state.green = -1; }).to.throw('green should be an integer between 0 and 255. got -1.')
+        chai.expect(() => { state.green = -1; }).to.throw('green should be an integer between 0 and 255. got -1.');
       });
 
       it('throws error when setting green to 256', () => {
-        chai.expect(() => { state.green = 256; }).to.throw('green should be an integer between 0 and 255. got 256.')
+        chai.expect(() => { state.green = 256; }).to.throw('green should be an integer between 0 and 255. got 256.');
       });
 
       // Blue
       it('throws error when setting blue to -1', () => {
-        chai.expect(() => { state.blue = -1; }).to.throw('blue should be an integer between 0 and 255. got -1.')
+        chai.expect(() => { state.blue = -1; }).to.throw('blue should be an integer between 0 and 255. got -1.');
       });
 
       it('throws error when setting blue to 256', () => {
-        chai.expect(() => { state.blue = 256; }).to.throw('blue should be an integer between 0 and 255. got 256.')
+        chai.expect(() => { state.blue = 256; }).to.throw('blue should be an integer between 0 and 255. got 256.');
       });
 
       // Alpha
       it('throws error when setting alpha to -1', () => {
-        chai.expect(() => { state.alpha = -1; }).to.throw('alpha / brightness should be an integer between 0 and 100. got -1.')
+        chai.expect(() => { state.alpha = -1; }).to.throw('alpha / brightness should be an integer between 0 and 100. got -1.');
       });
 
       it('throws error when setting alpha to 101', () => {
-        chai.expect(() => { state.alpha = 101; }).to.throw('alpha / brightness should be an integer between 0 and 100. got 101.')
+        chai.expect(() => { state.alpha = 101; }).to.throw('alpha / brightness should be an integer between 0 and 100. got 101.');
       });
 
       // Hue
       it('throws error when setting hue to -1', () => {
-        chai.expect(() => { state.hue = -1; }).to.throw('hue should be an integer between 0 and 360. got -1.')
+        chai.expect(() => { state.hue = -1; }).to.throw('hue should be an integer between 0 and 360. got -1.');
       });
 
       it('throws error when setting hue to 361', () => {
-        chai.expect(() => { state.hue = 361; }).to.throw('hue should be an integer between 0 and 360. got 361.')
+        chai.expect(() => { state.hue = 361; }).to.throw('hue should be an integer between 0 and 360. got 361.');
       });
 
       // Saturation
       it('throws error when setting saturation to -1', () => {
-        chai.expect(() => { state.saturation = -1; }).to.throw('saturation should be an integer between 0 and 100. got -1.')
+        chai.expect(() => { state.saturation = -1; }).to.throw('saturation should be an integer between 0 and 100. got -1.');
       });
 
       it('throws error when setting saturation to 101', () => {
-        chai.expect(() => { state.saturation = 101; }).to.throw('saturation should be an integer between 0 and 100. got 101.')
+        chai.expect(() => { state.saturation = 101; }).to.throw('saturation should be an integer between 0 and 100. got 101.');
       });
 
       // Brightness
       it('throws error when setting brightness to -1', () => {
-        chai.expect(() => { state.brightness = -1; }).to.throw('alpha / brightness should be an integer between 0 and 100. got -1.')
+        chai.expect(() => { state.brightness = -1; }).to.throw('alpha / brightness should be an integer between 0 and 100. got -1.');
       });
 
       it('throws error when setting brightness to 101', () => {
-        chai.expect(() => { state.brightness = 101; }).to.throw('alpha / brightness should be an integer between 0 and 100. got 101.')
+        chai.expect(() => { state.brightness = 101; }).to.throw('alpha / brightness should be an integer between 0 and 100. got 101.');
       });
 
     });
@@ -203,12 +203,12 @@ describe('State', () => {
 
     it('turns off', () => {
       state.state = false;
-      chai.expect(state.buffer.toString()).to.equal('255,255,255,0,,,,,')
+      chai.expect(state.buffer.toString()).to.equal('255,255,255,0,,,,,');
     });
 
     it('turns back on', () => {
       state.state = true;
-      chai.expect(state.buffer.toString()).to.equal('255,255,255,100,,,')
+      chai.expect(state.buffer.toString()).to.equal('255,255,255,100,,,');
     });
 
     describe('brightness', () => {
@@ -220,7 +220,7 @@ describe('State', () => {
       });
 
       it('remembers previous alpha', () => {
-        chai.expect(state.buffer.toString()).to.equal('255,255,255,34,,,,')
+        chai.expect(state.buffer.toString()).to.equal('255,255,255,34,,,,');
       });
 
     });

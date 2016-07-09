@@ -1,19 +1,13 @@
 "use strict";
 
-/**
- * Module imports
- */
-
+// Module Imports
 const debug = require('debug')(require('./package').name),
       State = require('./lib/state'),
       NobleDevice = require('noble-device'),
       assertFunction = require('./lib/util').assertFunction;
 
 
-/**
- * Constants
- */
-
+// Constants
 const ADVERTISEMENT_NAME = 'MFBOLT',
       SERVICE_UUID = 'fff0',
       CONTROL_UUID = 'fff1',
@@ -29,27 +23,27 @@ const ADVERTISEMENT_NAME = 'MFBOLT',
       DISCOVERY_LOOP_MS = 15000;
 
 
-/**
- * Constructor
- */
-
+/** @namespace */
 const Bolt = function(peripheral) {
   NobleDevice.call(this, peripheral);
   this.id = peripheral.id;
   this.state = State.getState(this.id);
-}
+};
 
 NobleDevice.Util.inherits(Bolt, NobleDevice);
 
-
 /**
- * Public Instance Methods
- */
-
-/**
- * Retrieve RGBA values of the bolt
- * @param {Bolt~numbersGetterCallback} done - completion callback
+ * Retrieve Red, Green, Blue and Alpha values of the bolt in the form of an Array of Integers.
+ * @example
+ * bolt.getRGBA(function(error, rgba) {
+ *   console.log('Current RGBA values are: ', rgba);
+ * });
+ *
+ * @param {Function} done - completion callback
+ * @param {NumbersGetterCallback} done - completion callback
  * @returns {Bolt}
+ * @memberof Bolt
+ * @public
  */
 
 Bolt.prototype.getRGBA = function (done) {
@@ -61,23 +55,34 @@ Bolt.prototype.getRGBA = function (done) {
   });
 };
 
+
 /**
- * Set RGBA values of the bolt
- * @param {number[]} rgba - Red / Green / Blue / Alpha values
- * @param {Bolt~simpleCallback} done - completion callback
+ * Set RGBA values of the bolt.
+ * @example
+ * bolt.setRGBA([255, 0, 0, 10], function(error) {
+ *   console.log('Bolt now set to red !');
+ * });
+ * @param {Array<number>} rgba - Red (0 to 255) / Green (0 to 255) / Blue (0 to 255) / Alpha (0 to 100) values
+ * @param {?SimpleCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.setRGBA = function (rgba, done) {
-  assertFunction(done);
   debug(`setting rgba with ${rgba}`);
   this.state.rgba = rgba;
   return this._writeStateValue(done);
 };
 
+
 /**
- * Retrieve HSB values of the bolt
- * @param {Bolt~numbersGetterCallback} done - completion callback
+ * Retrieve Hue, Saturation and Brightness values of the bolt in the form of an Array of Integers.
+ * @example
+ * bolt.getHSB(function(error, hsb) {
+ *   console.log('Current HSB values are: ', hsb);
+ * });
+ * @param {NumbersGetterCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 
 Bolt.prototype.getHSB = function (done) {
@@ -89,23 +94,34 @@ Bolt.prototype.getHSB = function (done) {
   });
 };
 
+
 /**
- * Set HSB values of the bolt
- * @param {number[]} rgba - Red / Green / Blue / Alpha values
- * @param {Bolt~simpleCallback} done - completion callback
+ * Set HSB values of the bolt.
+ * @example
+ * bolt.setHSB([0, 100, 10], function(error) {
+ *   console.log('Bolt now set to red !');
+ * });
+ * @param {Array<number>} rgba - Hue (0 to 360) / Saturation (0 to 100) / Brightness (0 to 100) values
+ * @param {?SimpleCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.setHSB = function (hsb, done) {
-  assertFunction(done);
   debug(`setting rgba with ${hsb}`);
   this.state.hsb = hsb;
   return this._writeStateValue(done);
 };
 
+
 /**
- * Retrieve Hue value of the bolt
- * @param {Bolt~numberGetterCallback} done - completion callback
+ * Retrieve Hue value of the bolt.
+ * @example
+ * bolt.getHSB(function(error, hue) {
+ *   console.log('Current Hue value is: ', hue);
+ * });
+ * @param {NumberGetterCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.getHue = function (done) {
   assertFunction(done);
@@ -116,23 +132,34 @@ Bolt.prototype.getHue = function (done) {
   });
 };
 
+
 /**
- * Set Hue value of the bolt
- * @param {number} hue - Hue value
- * @param {Bolt~simpleCallback} done - completion callback
+ * Set Hue value of the bolt.
+ * @example
+ * bolt.setHue(10, function(error) {
+ *   console.log('Hue is now set to 10');
+ * });
+ * @param {number} hue - Hue value (0 to 360)
+ * @param {?SimpleCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.setHue = function (hue, done) {
-  assertFunction(done);
   debug(`setting hue with ${hue}`);
   this.state.hue = hue;
   return this._writeStateValue(done);
 };
 
+
 /**
- * Retrieve Saturation value of the bolt
- * @param {Bolt~numberGetterCallback} done - completion callback
+ * Retrieve Saturation value of the bolt.
+ * @example
+ * bolt.getSaturation(function(error, saturation) {
+ *   console.log('Current Saturation value is: ', saturation);
+ * });
+ * @param {NumberGetterCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.getSaturation = function (done) {
   assertFunction(done);
@@ -143,23 +170,34 @@ Bolt.prototype.getSaturation = function (done) {
   });
 };
 
+
 /**
- * Set Saturation value of the bolt
- * @param {number} saturation - Saturation value
- * @param {Bolt~simpleCallback} done - completion callback
+ * Set Saturation value of the bolt.
+ * @example
+ * bolt.setSaturation(10, function(error) {
+ *   console.log('Saturation is now set to 10');
+ * });
+ * @param {number} saturation - Saturation value (0 to 100)
+ * @param {?SimpleCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.setSaturation = function (saturation, done) {
-  assertFunction(done);
   debug(`setting saturation with ${saturation}`);
   this.state.saturation = saturation;
   return this._writeStateValue(done);
 };
 
+
 /**
- * Retrieve Brightness value of the bolt
- * @param {Bolt~numberGetterCallback} done - completion callback
+ * Retrieve Brightness value of the bolt.
+ * @example
+ * bolt.getBrightness(function(error, brightness) {
+ *   console.log('Current Brightness value is: ', brightness);
+ * });
+ * @param {NumberGetterCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.getBrightness = function (done) {
   assertFunction(done);
@@ -170,23 +208,34 @@ Bolt.prototype.getBrightness = function (done) {
   });
 };
 
+
 /**
- * Set Brightness value of the bolt
- * @param {number} brightness - Brightness value
- * @param {Bolt~simpleCallback} done - completion callback
+ * Set Brightness value of the bolt.
+ * @example
+ * bolt.setBrightness(10, function(error) {
+ *   console.log('Brightness is now set to 10');
+ * });
+ * @param {number} brightness - Brightness value (0 to 100)
+ * @param {?SimpleCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.setBrightness = function (brightness, done) {
-  assertFunction(done);
   debug(`setting brightness with ${brightness}`);
   this.state.brightness = brightness;
   return this._writeStateValue(done);
 };
 
+
 /**
- * Retrieve State value of the bolt
- * @param {Bolt~booleanGetterCallback} done - completion callback
+ * Retrieve State value of the bolt.
+ * @example
+ * bolt.getState(function(error, state) {
+ *   console.log(`Bolt is ${state ? 'on' : 'off'}`);
+ * });
+ * @param {BooleanGetterCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.getState = function (done) {
   assertFunction(done);
@@ -197,23 +246,31 @@ Bolt.prototype.getState = function (done) {
   });
 };
 
+
 /**
- * Set State value of the bolt
+ * Set State value of the bolt.
+ * @example
+ * bolt.setState(true, function(error) {
+ *   console.log(`Bolt is now on !`);
+ * });
  * @param {boolean} state - State value
- * @param {Bolt~simpleCallback} done - completion callback
+ * @param {?SimpleCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.setState = function (state, done) {
-  assertFunction(done);
   debug(`setting state with ${state}`);
   this.state.state = state;
   return this._writeStateValue(done);
 };
 
+
 /**
- * Retrieve Gradual Mode value of the bolt
- * @param {Bolt~booleanGetterCallback} done - completion callback
+ * Retrieve Gradual Mode value of the bolt. Indicates whether transition between states is progressive or immediate.
+ * @see http://www.yeelight.com/download/yeelight_blue_message_interface_v1.0.pdf
+ * @param {BooleanGetterCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.getGradualMode = function (done) {
   assertFunction(done);
@@ -222,24 +279,27 @@ Bolt.prototype.getGradualMode = function (done) {
   return this;
 };
 
+
 /**
- * Set Gradual Mode value of the bolt
+ * Set Gradual Mode value of the bolt.
  * @param {boolean} gradualMode - Gradual Mode value
- * @param {Bolt~simpleCallback} done - completion callback
+ * @param {?SimpleCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.setGradualMode = function (gradualMode, done) {
-  assertFunction(done);
   debug(`setting gradual mode with ${gradualMode}`);
   this.state.gradualMode = gradualMode;
   this._write(EFFECT_UUID, new Buffer(gradualMode ? GRADUAL_MODE : NON_GRADUAL_MODE), done);
   return this;
 };
 
+
 /**
- * Retrieve Name value of the bolt
- * @param {Bolt~stringGetterCallback} done - completion callback
+ * Retrieve Name value of the bolt (as visible by the Bluetooth client).
+ * @param {StringGetterCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.getName = function (done) {
   assertFunction(done);
@@ -251,21 +311,24 @@ Bolt.prototype.getName = function (done) {
   });
 };
 
+
 /**
- * Set Name value of the bolt
+ * Set Name value of the bolt.
  * @param {string} name - Name value
- * @param {Bolt~simpleCallback} done - completion callback
+ * @param {?SimpleCallback} done - completion callback
  * @returns {Bolt}
+ * @public
  */
 Bolt.prototype.setName = function (name, done) {
-  assertFunction(done);
   debug(`setting name with ${name}`);
   this._write(NAME_UUID, new Buffer(name), done);
 };
 
+
 /**
  * Clean up disconnected bolts from internal registry
  * Automatically called on disconnect event
+ * @private
  */
 Bolt.prototype.onDisconnect = function () {
   debug(`disconnected: ${this.id}`);
@@ -274,14 +337,11 @@ Bolt.prototype.onDisconnect = function () {
 
 
 /**
- * Private (pseudo) Instance Methods
- */
-
-/**
  * Read specific characteristic of the bolt
  * @param {string} characteristic - UUID of characteristic to read
- * @param {Bolt~simpleCallback} done - completion callback
+ * @param {SimpleCallback} done - completion callback
  * @returns {Bolt}
+ * @private
  */
 Bolt.prototype._read = function (characteristic, done) {
   assertFunction(done);
@@ -297,12 +357,14 @@ Bolt.prototype._read = function (characteristic, done) {
   return this;
 };
 
+
 /**
  * Writes value to the bolt
  * @param {string} characteristic - UUID of characteristic to write
  * @param {Buffer} characteristic - Buffer value to write
- * @param {Bolt~simpleCallback} done - completion callback
+ * @param {SimpleCallback} done - completion callback
  * @returns {Bolt}
+ * @private
  */
 Bolt.prototype._write = function (characteristic, buffer, done) {
   assertFunction(done);
@@ -311,10 +373,12 @@ Bolt.prototype._write = function (characteristic, buffer, done) {
   return this;
 };
 
+
 /**
  * Read current value of the bolt and update internal state
- * @param {Bolt~simpleCallback} done - completion callback
+ * @param {SimpleCallback} done - completion callback
  * @returns {Bolt}
+ * @private
  */
 Bolt.prototype._readStateValue = function (done) {
   assertFunction(done);
@@ -330,20 +394,26 @@ Bolt.prototype._readStateValue = function (done) {
   return this;
 };
 
+
 /**
  * Write current internal state value on the bolt.
  * Real write is defered, callback is immediately invoked.
- * @param {Bolt~simpleCallback} done - completion callback
+ * @param {?SimpleCallback} done - completion callback
  * @returns {Bolt}
+ * @private
  */
 Bolt.prototype._writeStateValue = function (done) {
-  done();
+  if (typeof done === Function) {
+    done();
+  }
   return this._delayedWrite();
 };
+
 
 /**
  * Delays writing to the bolt until DELAYED_WRITE_MS has elapsed.
  * @returns {Bolt}
+ * @private
  */
 Bolt.prototype._delayedWrite = function () {
   clearTimeout(this.writeTimer);
@@ -356,10 +426,12 @@ Bolt.prototype._delayedWrite = function () {
   return this;
 };
 
+
 /**
  * Delays saving default value set to the bolt until DELAYED_PERSIST_MS has elapsed.
  * This essentially allows remembering the last value set if the bolt if physically turned off / unplugged.
  * @returns {Bolt}
+ * @private
  */
 Bolt.prototype._delayedPersist = function () {
   clearTimeout(this.persistTimer);
@@ -372,29 +444,34 @@ Bolt.prototype._delayedPersist = function () {
 
 
 /**
- * Public Static Methods
- */
-
-/**
  * Used by Noble Device to detect bolt from other BLE devices.
+ * @private
  */
-Bolt.SCAN_UUIDS = [SERVICE_UUID]
+Bolt.SCAN_UUIDS = [SERVICE_UUID];
 
 /**
  * Internal registry to keep track of currently discovered and connected bolts.
+ * @private
  */
 Bolt.bolts = [];
 
 /**
  * Counter for discover loop. Useful for debugging purposes mostly.
+ * @private
  */
 Bolt.loopCount = 0;
+
 
 /**
  * Starts the discovery loop.
  * Loop consist in stopping and starting the Bolt discovery process every DISCOVERY_LOOP_MS.
  * This is to paliate a potential issue with Noble device that becomes stale after a few hours
  * and loose connection with connected bolt / stop detecting previously disconnected bolts.
+ * @static
+ * @example
+ * Bolt.init(function(error, rgba) {
+ *   console.log('Current RGBA values are: ', rgba);
+ * });
  */
 Bolt.init = function() {
   this.loopCount ++;
@@ -407,10 +484,17 @@ Bolt.init = function() {
   Bolt.discoverAll(Bolt._setup);
 };
 
+
 /**
  * Retrieve an bolt from internal registry.
  * @param {string} id - bolt identifier
  * @returns {Bolt?}
+ * @static
+ * @example
+ * let bolt = Bolt.get('2312AC5C08E348699B0199458AC644BD');
+ * bolt.setState(true, function() {
+ *   ...
+ * });
  */
 Bolt.get = function(id) {
   return Bolt.bolts.filter((bolt, index) => {
@@ -418,10 +502,14 @@ Bolt.get = function(id) {
   })[0];
 };
 
+
 /**
  * Remove an bolt from internal registry.
  * @param {string} id - bolt identifier
  * @returns {boolean}
+ * @static
+ * @example
+ * let bolt = Bolt.remove('2312AC5C08E348699B0199458AC644BD');
  */
 Bolt.remove = function(id) {
   const bolt = Bolt.get(id);
@@ -435,11 +523,13 @@ Bolt.remove = function(id) {
   return found;
 };
 
+
 /**
  * Indicate if a BLE peripheral is a bolt.
  * Used by Noble Device during detection process.
  * @param {Noble~Peripheral} peripheral - Noble peripheral object
  * @returns {boolean}
+ * @private
  */
 Bolt.is = function(peripheral) {
   return peripheral.advertisement.localName === ADVERTISEMENT_NAME;
@@ -447,13 +537,10 @@ Bolt.is = function(peripheral) {
 
 
 /**
- * Private (pseudo) Static Methods
- */
-
-/**
  * Callback used by discoverAll / stopDiscoverAll Noble device helpers.
  * Initialize the internal state representation of the bolt.
  * Keep track of newly discovered bolts in internal registry.
+ * @private
  */
 Bolt._setup = function (bolt) {
   debug(`discovered: ${bolt.id}`);
@@ -463,7 +550,7 @@ Bolt._setup = function (bolt) {
         Bolt.init();
       } else {
         debug(`ready: ${bolt.id}`);
-        Bolt.bolts.push(bolt)
+        Bolt.bolts.push(bolt);
       }
     });
   });
@@ -471,47 +558,43 @@ Bolt._setup = function (bolt) {
 
 
 /**
- * Module exports
- */
-
-module.exports = Bolt;
-
-
-/**
- * Callbacks documentation
- */
-
-/**
  * Simple completion callback
- * @callback Bolt~simpleCallback
- * @param {?error} Error while performing async operation
+ * @callback SimpleCallback
+ * @memberof Bolt
+ * @param {?Error} Error while performing async operation
  */
 
 /**
  * Numbers getter completion callback
- * @callback Bolt~numbersGetterCallback
- * @param {?error} Error while performing async operation
- * @param {?number[]} Value retrieved
+ * @callback NumbersGetterCallback
+ * @memberof Bolt
+ * @param {?Error} Error while performing async operation
+ * @param {?Array<Number>} Value retrieved
  */
 
 /**
  * Number getter completion callback
- * @callback Bolt~numberGetterCallback
- * @param {?error} Error while performing async operation
- * @param {?number} Value retrieved
+ * @callback NumberGetterCallback
+ * @memberof Bolt
+ * @param {?Error} Error while performing async operation
+ * @param {?Number} Value retrieved
  */
 
 /**
  * Boolean getter completion callback
- * @callback Bolt~booleanGetterCallback
- * @param {?error} Error while performing async operation
- * @param {?boolean} Value retrieved
+ * @callback BooleanGetterCallback
+ * @memberof Bolt
+ * @param {?Error} Error while performing async operation
+ * @param {?Boolean} Value retrieved
  */
 
 /**
  * String getter completion callback
- * @callback Bolt~stringGetterCallback
- * @param {?error} Error while performing async operation
- * @param {?string} Value retrieved
+ * @callback StringGetterCallback
+ * @memberof Bolt
+ * @param {?Error} Error while performing async operation
+ * @param {?String} Value retrieved
  */
- 
+
+
+module.exports = Bolt;
