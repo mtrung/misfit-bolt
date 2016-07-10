@@ -403,8 +403,10 @@ Bolt.prototype._readStateValue = function (done) {
  * @private
  */
 Bolt.prototype._writeStateValue = function (done) {
-  if (typeof done === Function) {
+  if (typeof done === "function") {
     done();
+  } else {
+    debug('tried to call _writeStateValue with non function callback:', typeof done);
   }
   return this._delayedWrite();
 };
