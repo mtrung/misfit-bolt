@@ -547,6 +547,7 @@ Bolt._setup = function (bolt) {
   bolt.connectAndSetup(() => {
     bolt.getRGBA((error) => {
       if (error) {
+        debug(`error getting initial RGBA: ${error}`);
         Bolt.init();
       } else {
         debug(`ready: ${bolt.id}`);
