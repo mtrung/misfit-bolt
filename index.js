@@ -350,7 +350,7 @@ Bolt.prototype._read = function (characteristic, done) {
     if (buffer === undefined) {
       error = new Error("couldn't read buffer value for characteristic ${characteristic} of service ${SERVICE_UUID}");
     }
-    debug(`got buffer ${buffer}`);
+    debug(`got buffer "${buffer}"`);
     done(error, buffer);
   });
 
