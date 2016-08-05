@@ -13,6 +13,7 @@ const ADVERTISEMENT_NAME = 'MFBOLT',
       CONTROL_UUID = 'fff1',
       EFFECT_UUID = 'fffc',
       NAME_UUID = 'fff8',
+      FW_VER_UUID = 'fffd',
       ON = 'CLTMP 3200,100',
       OFF = 'CLTMP 3200,0',
       GRADUAL_MODE = 'TS',
@@ -389,6 +390,26 @@ Bolt.prototype._readStateValue = function (done) {
     }
     this.state.buffer = buffer;
     done(undefined, this.state.value);
+  });
+
+  return this;
+};
+
+/**
+ * Read FW version
+ * @param {SimpleCallback} done - completion callback
+ * @returns {string}
+ * @public
+ */
+Bolt.prototype.readFwVer = function (done) {
+  assertFunction(done);
+  debug(`reading readFwVer`);
+  this._read(FW_VER_UUID, (error, buffer) => {
+    if (error) {
+      return done(error);
+    }
+    let fwVer = buffer.toString(undefined, 0, buffer.length-1);
+    done(undefined, fwVer);
   });
 
   return this;
