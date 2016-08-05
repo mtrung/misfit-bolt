@@ -12,7 +12,9 @@ const ADVERTISEMENT_NAME = 'MFBOLT',
       SERVICE_UUID = 'fff0',
       CONTROL_UUID = 'fff1',
       EFFECT_UUID = 'fffc',
-      NAME_UUID = 'fff8',// not name, but we don't know what it is
+      COLOR_FLOW_CHARID = 'fff7',
+      NAME_UUID = 'fff8',
+      NAME_NOTIFY_CHARID = 'fff9',
       FW_VER_UUID = 'fffd',
       ON = 'CLTMP 3200,100',
       OFF = 'CLTMP 3200,0',
@@ -332,6 +334,7 @@ Bolt.prototype.setName = function (name, done) {
 Bolt.prototype.onDisconnect = function () {
   debug(`disconnected: ${this.id}`);
   Bolt.remove(this.id);
+  NobleDevice.prototype.onDisconnect.call(this);
 };
 
 
@@ -402,11 +405,12 @@ Bolt.prototype._readStateValue = function (done) {
  */
 Bolt.prototype._writeStateValue = function (done) {
   if (typeof done === "function") {
-    done();
+    //done();
   } else {
     debug('tried to call _writeStateValue with non function callback:', typeof done);
+    return this._delayedWrite();
   }
-  return this._delayedWrite();
+  return this._delayedWrite(done);
 };
 
 
@@ -415,12 +419,12 @@ Bolt.prototype._writeStateValue = function (done) {
  * @returns {Bolt}
  * @private
  */
-Bolt.prototype._delayedWrite = function () {
+Bolt.prototype._delayedWrite = function (done) {
   clearTimeout(this.writeTimer);
   this.writeTimer = setTimeout(() => {
     debug(`writing state value with value ${this.state.value}`);
     this._write(CONTROL_UUID, this.state.buffer, () => {
-      this._delayedPersist();
+      this._delayedPersist(done);
     });
   }, DELAYED_WRITE_MS);
   return this;
@@ -433,11 +437,12 @@ Bolt.prototype._delayedWrite = function () {
  * @returns {Bolt}
  * @private
  */
-Bolt.prototype._delayedPersist = function () {
+Bolt.prototype._delayedPersist = function (done) {
   clearTimeout(this.persistTimer);
   this.persistTimer = setTimeout(() => {
     debug(`setting characteristic ${EFFECT_UUID} of service ${SERVICE_UUID} with data ${PERSIST_DEFAULT_COLOR}`);
     this.writeDataCharacteristic(SERVICE_UUID, EFFECT_UUID, new Buffer(PERSIST_DEFAULT_COLOR));
+    if (done) done();
   }, DELAYED_PERSIST_MS);
   return this;
 };
@@ -466,6 +471,25 @@ Bolt.prototype.readPersistColor = function (done) {
   return this;
 };
 
+Bolt.prototype.readColorFlow = function (done) {
+  this._read(COLOR_FLOW_CHARID, done);
+  return this;
+};
+
+Bolt.prototype.notifyName = function(callback) {
+    debug('notifyName');
+  this.onMeasumentChangeBinded = this.onMeasumentChange.bind(this);
+  this.notifyCharacteristic(SERVICE_UUID, NAME_NOTIFY_CHARID, true, this.onMeasumentChangeBinded, callback);
+};
+
+Bolt.prototype.unnotifyMeasument = function(callback) {
+  this.notifyCharacteristic(SERVICE_UUID, NAME_NOTIFY_CHARID, false, this.onMeasumentChangeBinded, callback);
+};
+
+Bolt.prototype.onMeasumentChange = function(data) {
+    debug('nameChange'+data);
+    this.emit('nameChange', data);
+};
 
 /**
  * Used by Noble Device to detect bolt from other BLE devices.
