@@ -12,7 +12,7 @@ const ADVERTISEMENT_NAME = 'MFBOLT',
       SERVICE_UUID = 'fff0',
       CONTROL_UUID = 'fff1',
       EFFECT_UUID = 'fffc',
-      NAME_UUID = 'fff8',
+      NAME_UUID = 'fff8',// not name, but we don't know what it is
       FW_VER_UUID = 'fffd',
       ON = 'CLTMP 3200,100',
       OFF = 'CLTMP 3200,0',
@@ -87,7 +87,6 @@ Bolt.prototype.setRGBA = function (rgba, done) {
  */
 
 Bolt.prototype.getHSB = function (done) {
-  assertFunction(done);
   debug(`getting hsb`);
   return this._readStateValue((error) => {
     debug(`got hsb ${this.state.hsb}`);
@@ -125,7 +124,6 @@ Bolt.prototype.setHSB = function (hsb, done) {
  * @public
  */
 Bolt.prototype.getHue = function (done) {
-  assertFunction(done);
   debug(`getting hue`);
   return this._readStateValue((error) => {
     debug(`got hue ${this.state.hue}`);
@@ -163,7 +161,6 @@ Bolt.prototype.setHue = function (hue, done) {
  * @public
  */
 Bolt.prototype.getSaturation = function (done) {
-  assertFunction(done);
   debug(`getting saturation`);
   return this._readStateValue((error) => {
     debug(`got saturation ${this.state.saturation}`);
@@ -201,7 +198,6 @@ Bolt.prototype.setSaturation = function (saturation, done) {
  * @public
  */
 Bolt.prototype.getBrightness = function (done) {
-  assertFunction(done);
   debug(`getting brightness`);
   return this._readStateValue((error) => {
     debug(`got brightness ${this.state.brightness}`);
@@ -239,14 +235,12 @@ Bolt.prototype.setBrightness = function (brightness, done) {
  * @public
  */
 Bolt.prototype.getState = function (done) {
-  assertFunction(done);
   debug(`getting state`);
   return this._readStateValue((error) => {
     debug(`got state ${this.state.state}`);
     done(error, this.state.state);
   });
 };
-
 
 /**
  * Set State value of the bolt.
@@ -303,13 +297,17 @@ Bolt.prototype.setGradualMode = function (gradualMode, done) {
  * @public
  */
 Bolt.prototype.getName = function (done) {
-  assertFunction(done);
-  debug(`getting name`);
-  return this._readStateValue((error) => {
-    const name = this.state.name;
-    debug(`got name ${name}`);
-    done(error, name);
+  // debug(`getting name`);
+  this._read(NAME_UUID, (error, buffer) => {
+    if (error || !buffer) {
+      return done(error);
+    }
+    let name = buffer.toString();
+    // debug(`got name ${name}`);
+    done(undefined, name);
   });
+
+  return this;
 };
 
 
@@ -344,7 +342,7 @@ Bolt.prototype.onDisconnect = function () {
  * @returns {Bolt}
  * @private
  */
-Bolt.prototype._read = function (characteristic, done) {
+Bolt.prototype._read = function (characteristic, done, isStringResponse) {
   assertFunction(done);
   debug(`getting characteristic ${characteristic} of service ${SERVICE_UUID}`);
   this.readDataCharacteristic(SERVICE_UUID, characteristic, (error, buffer) => {
@@ -352,12 +350,13 @@ Bolt.prototype._read = function (characteristic, done) {
       error = new Error("couldn't read buffer value for characteristic ${characteristic} of service ${SERVICE_UUID}");
     }
     debug(`got buffer "${buffer}"`);
-    done(error, buffer);
+
+    if (buffer && isStringResponse) done(error, buffer.toString());
+    else done(error, buffer);
   });
 
   return this;
 };
-
 
 /**
  * Writes value to the bolt
@@ -382,7 +381,6 @@ Bolt.prototype._write = function (characteristic, buffer, done) {
  * @private
  */
 Bolt.prototype._readStateValue = function (done) {
-  assertFunction(done);
   debug(`reading state value`);
   this._read(CONTROL_UUID, (error, buffer) => {
     if (error) {
@@ -394,27 +392,6 @@ Bolt.prototype._readStateValue = function (done) {
 
   return this;
 };
-
-/**
- * Read FW version
- * @param {SimpleCallback} done - completion callback
- * @returns {string}
- * @public
- */
-Bolt.prototype.readFwVer = function (done) {
-  assertFunction(done);
-  debug(`reading readFwVer`);
-  this._read(FW_VER_UUID, (error, buffer) => {
-    if (error) {
-      return done(error);
-    }
-    let fwVer = buffer.toString(undefined, 0, buffer.length-1);
-    done(undefined, fwVer);
-  });
-
-  return this;
-};
-
 
 /**
  * Write current internal state value on the bolt.
@@ -462,6 +439,30 @@ Bolt.prototype._delayedPersist = function () {
     debug(`setting characteristic ${EFFECT_UUID} of service ${SERVICE_UUID} with data ${PERSIST_DEFAULT_COLOR}`);
     this.writeDataCharacteristic(SERVICE_UUID, EFFECT_UUID, new Buffer(PERSIST_DEFAULT_COLOR));
   }, DELAYED_PERSIST_MS);
+  return this;
+};
+
+/**
+ * Read FW version
+ * @param {SimpleCallback} done - completion callback
+ * @returns {string}
+ * @public
+ */
+Bolt.prototype.readFwVer = function (done) {
+  // debug('reading readFwVer');
+  this._read(FW_VER_UUID, (error, buffer) => {
+    if (error) {
+      return done(error);
+    }
+    let fwVer = buffer.toString(undefined, 0, buffer.length-1);
+    done(undefined, fwVer);
+  });
+
+  return this;
+};
+
+Bolt.prototype.readPersistColor = function (done) {
+  this._read(EFFECT_UUID, done, true);
   return this;
 };
 
