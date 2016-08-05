@@ -1,5 +1,5 @@
 Bolt = require('.');
-async = require('async'),
+async = require('async');
 
 
 function setColorInInterval(bolt) {

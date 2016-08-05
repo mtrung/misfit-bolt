@@ -424,7 +424,11 @@ Bolt.prototype._delayedWrite = function (done) {
   this.writeTimer = setTimeout(() => {
     debug(`writing state value with value ${this.state.value}`);
     this._write(CONTROL_UUID, this.state.buffer, () => {
-      this._delayedPersist(done);
+      if (this.shouldPersist) {
+        this._delayedPersist(done);
+       } else {
+        if (done) done();
+       }
     });
   }, DELAYED_WRITE_MS);
   return this;
