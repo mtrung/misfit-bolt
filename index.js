@@ -11,16 +11,16 @@ const debug = require('debug')(require('./package').name),
 const ADVERTISEMENT_NAME = 'MFBOLT',
       SERVICE_UUID = 'fff0',
       CONTROL_UUID = 'fff1',
-      EFFECT_UUID = 'fffc',
       COLOR_FLOW_CHARID = 'fff7',
       NAME_UUID = 'fff8',
       NAME_NOTIFY_CHARID = 'fff9',
       FW_VER_UUID = 'fffd',
-      ON = 'CLTMP 3200,100',
-      OFF = 'CLTMP 3200,0',
+
+      EFFECT_UUID = 'fffc',
       GRADUAL_MODE = 'TS',
       NON_GRADUAL_MODE = 'TE',
       PERSIST_DEFAULT_COLOR = 'DF',
+
       DELAYED_WRITE_MS = 500,
       DELAYED_PERSIST_MS = 1000,
       DISCOVERY_LOOP_MS = 15000;
@@ -276,7 +276,6 @@ Bolt.prototype.getGradualMode = function (done) {
   return this;
 };
 
-
 /**
  * Set Gradual Mode value of the bolt.
  * @param {boolean} gradualMode - Gradual Mode value
@@ -287,7 +286,25 @@ Bolt.prototype.getGradualMode = function (done) {
 Bolt.prototype.setGradualMode = function (gradualMode, done) {
   debug(`setting gradual mode with ${gradualMode}`);
   this.state.gradualMode = gradualMode;
-  this._write(EFFECT_UUID, new Buffer(gradualMode ? GRADUAL_MODE : NON_GRADUAL_MODE), done);
+  this.setEffectSetting(gradualMode ? GRADUAL_MODE : NON_GRADUAL_MODE, done);
+  return this;
+};
+
+Bolt.prototype.readEffectSetting = function (done) {
+  debug('read effectSetting');
+  this._read(EFFECT_UUID, (error, buffer) => {
+      if (error || !buffer) {
+        return done(error);
+      }
+      this.state.gradualMode = (buffer.toString() === GRADUAL_MODE);
+      done(undefined, this.state.gradualMode);
+  }, true);
+  return this;
+};
+
+Bolt.prototype.setEffectSetting = function (effectSetting, done) {
+  debug(`effectSetting -> ${effectSetting}`);
+  this._write(EFFECT_UUID, new Buffer(effectSetting), done);
   return this;
 };
 
@@ -370,7 +387,7 @@ Bolt.prototype._read = function (characteristic, done, isStringResponse) {
  * @private
  */
 Bolt.prototype._write = function (characteristic, buffer, done) {
-  assertFunction(done);
+  if (done) assertFunction(done);
   debug(`setting characteristic ${characteristic} of service ${SERVICE_UUID} with buffer ${buffer}`);
   this.writeDataCharacteristic(SERVICE_UUID, characteristic, buffer, done);
   return this;
@@ -444,9 +461,10 @@ Bolt.prototype._delayedWrite = function (done) {
 Bolt.prototype._delayedPersist = function (done) {
   clearTimeout(this.persistTimer);
   this.persistTimer = setTimeout(() => {
-    debug(`setting characteristic ${EFFECT_UUID} of service ${SERVICE_UUID} with data ${PERSIST_DEFAULT_COLOR}`);
-    this.writeDataCharacteristic(SERVICE_UUID, EFFECT_UUID, new Buffer(PERSIST_DEFAULT_COLOR));
-    if (done) done();
+    this.setEffectSetting(PERSIST_DEFAULT_COLOR, done);
+    // debug(`setting characteristic ${EFFECT_UUID} of service ${SERVICE_UUID} with data ${PERSIST_DEFAULT_COLOR}`);
+    // this.writeDataCharacteristic(SERVICE_UUID, EFFECT_UUID, new Buffer(PERSIST_DEFAULT_COLOR));
+    // if (done) done();
   }, DELAYED_PERSIST_MS);
   return this;
 };
@@ -467,11 +485,6 @@ Bolt.prototype.readFwVer = function (done) {
     done(undefined, fwVer);
   });
 
-  return this;
-};
-
-Bolt.prototype.readPersistColor = function (done) {
-  this._read(EFFECT_UUID, done, true);
   return this;
 };
 

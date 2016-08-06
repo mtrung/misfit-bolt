@@ -36,7 +36,7 @@ function onConnect(bolt) {
       (done) => { bolt.getName(done); },
       (done) => { bolt.getGradualMode(done); },
       (done) => { bolt.readFwVer(done); },
-      (done) => { bolt.readPersistColor(done); },
+      (done) => { bolt.readEffectSetting(done); },
       (done) => { bolt.readColorFlow(done); },
       (done) => { bolt.setState(!bolt.state.state, done); },
     ], (error, values) => {
