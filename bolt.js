@@ -32,10 +32,8 @@ function onConnect(bolt) {
     async.series([
       (done) => { bolt.getRGBA(done); },
     //   (done) => { bolt.getHSB(done); },
-      (done) => { bolt.notifyName(done); },
-      (done) => { bolt.getName(done); },
-      (done) => { bolt.getGradualMode(done); },
-      (done) => { bolt.readFwVer(done); },
+      (done) => { bolt.readName(done); },
+    //   (done) => { bolt.readFwVer(done); },
       (done) => { bolt.readEffectSetting(done); },
       (done) => { bolt.readColorFlow(done); },
       (done) => { bolt.setState(!bolt.state.state, done); },
@@ -44,10 +42,10 @@ function onConnect(bolt) {
         console.log(error);
       } else {
         console.log(values);
-        console.log(bolt.state.state);
-        console.log(bolt.state.rgba);
-        console.log(bolt.state.hsb);
-        //bolt.disconnect(done);
+        console.log('HSB='+bolt.state.hsb);
+        console.log('state='+bolt.state.state);
+        console.log('name='+bolt.name);
+        bolt.disconnect(done);
       }
     });
 }
@@ -60,11 +58,6 @@ Bolt.discover(function(bolt) {
   bolt.on('disconnect', function() {
       process.exit(0);
   });
-
-  bolt.on('nameChange', function(data) {
-      console.log("update nameChange: " + data);
-  });
-
 
   // Each time a bolt is discovered, connect to it
   bolt.connectAndSetUp(function(error) {

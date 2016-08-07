@@ -12,9 +12,14 @@ const ADVERTISEMENT_NAME = 'MFBOLT',
       SERVICE_UUID = 'fff0',
       CONTROL_UUID = 'fff1',
       COLOR_FLOW_CHARID = 'fff7',
+
+      FW_VER_UUID = 'fffd',
+
       NAME_UUID = 'fff8',
       NAME_NOTIFY_CHARID = 'fff9',
-      FW_VER_UUID = 'fffd',
+      NAME_QUERY = 'NF,,,,,,,,,,,,,',
+      NAME_END   = 'NEND',//'NEND,,,,,,,,,,,',
+      NAME_START = 'N 0',
 
       EFFECT_UUID = 'fffc',
       GRADUAL_MODE = 'TS',
@@ -297,7 +302,7 @@ Bolt.prototype.readEffectSetting = function (done) {
         return done(error);
       }
       this.state.gradualMode = (buffer.toString() === GRADUAL_MODE);
-      done(undefined, this.state.gradualMode);
+      done(undefined, buffer.toString());
   }, true);
   return this;
 };
@@ -316,16 +321,8 @@ Bolt.prototype.setEffectSetting = function (effectSetting, done) {
  * @public
  */
 Bolt.prototype.getName = function (done) {
-  // debug(`getting name`);
-  this._read(NAME_UUID, (error, buffer) => {
-    if (error || !buffer) {
-      return done(error);
-    }
-    let name = buffer.toString();
-    // debug(`got name ${name}`);
-    done(undefined, name);
-  });
-
+  assertFunction(done);
+  done(undefined, this.name);
   return this;
 };
 
@@ -387,9 +384,14 @@ Bolt.prototype._read = function (characteristic, done, isStringResponse) {
  * @private
  */
 Bolt.prototype._write = function (characteristic, buffer, done) {
-  if (done) assertFunction(done);
   debug(`setting characteristic ${characteristic} of service ${SERVICE_UUID} with buffer ${buffer}`);
-  this.writeDataCharacteristic(SERVICE_UUID, characteristic, buffer, done);
+  if (done) {
+    assertFunction(done);
+    this.writeDataCharacteristic(SERVICE_UUID, characteristic, buffer, done);
+  } else {
+    // writeDataCharacteristic callback has 1 param error
+    this.writeDataCharacteristic(SERVICE_UUID, characteristic, buffer, (error) => {});
+  }
   return this;
 };
 
@@ -493,19 +495,62 @@ Bolt.prototype.readColorFlow = function (done) {
   return this;
 };
 
+Bolt.prototype.readName = function (done) {
+  debug(`readName`);
+  this.notifyName( (error) => {
+    if (!error) {
+      this._readNameCallback = done;
+      this._write(NAME_UUID, new Buffer(NAME_QUERY), (error) => {
+        if (error) {
+          done(error);
+          return;
+        }
+        this._readTimeout = setTimeout(() => {
+          this._readNameCallback(new Error('Timeout while readName'));
+        }, 2000);
+      });
+    } else done(error);
+  });
+};
+
 Bolt.prototype.notifyName = function(callback) {
-    debug('notifyName');
-  this.onMeasumentChangeBinded = this.onMeasumentChange.bind(this);
-  this.notifyCharacteristic(SERVICE_UUID, NAME_NOTIFY_CHARID, true, this.onMeasumentChangeBinded, callback);
+  // debug('notifyName');
+  this.onNameNotifyBinded = this.onNameNotify.bind(this);
+  // notifyCharacteristic has 1 param error
+  this.notifyCharacteristic(SERVICE_UUID, NAME_NOTIFY_CHARID, true, this.onNameNotifyBinded, callback);
 };
 
-Bolt.prototype.unnotifyMeasument = function(callback) {
-  this.notifyCharacteristic(SERVICE_UUID, NAME_NOTIFY_CHARID, false, this.onMeasumentChangeBinded, callback);
+Bolt.prototype.unnotifyName = function(callback) {
+  debug('unnotifyName');
+  this.notifyCharacteristic(SERVICE_UUID, NAME_NOTIFY_CHARID, false, this.onNameNotifyBinded, callback);
 };
 
-Bolt.prototype.onMeasumentChange = function(data) {
-    debug('nameChange'+data);
-    this.emit('nameChange', data);
+Bolt.prototype.onNameNotify = function(data) {
+    if (!data) return;
+    let dataStr = data.toString();
+    debug('onNameNotify: data='+dataStr);
+    clearTimeout(this._readTimeout);
+
+    if (dataStr.startsWith(NAME_END)) {
+      debug('_readNameCallback "' + this.name + '"');
+      this._readNameCallback(undefined, this.name);
+    } else {
+      this._readTimeout = setTimeout(() => {
+        debug('readName: timeout');
+        this._readNameCallback(new Error('readName: timeout'), this.name);
+      }, 2000);
+
+      let strArray = dataStr.split(',');
+      if (!strArray || strArray.length < 2) {
+        this._readNameCallback(new Error('readName: parsing error'), this.name);
+        return;
+      }
+      if (dataStr.startsWith(NAME_START)) {
+        this.name = strArray[1];
+      } else {
+        this.name += strArray[1];
+      }
+    }
 };
 
 /**
