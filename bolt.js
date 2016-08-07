@@ -27,7 +27,7 @@ function done(error, value) {
 }
 
 function onConnect(bolt) {
-    console.log("- onConnect: " + bolt.id + ' ' + bolt.address);
+    console.log("- onConnect: " + bolt.id + ' ' + bolt.address + ' rssi=' + bolt._peripheral.rssi);
 
     async.series([
       (done) => { bolt.getRGBA(done); },
