@@ -36,9 +36,14 @@ function onConnect(bolt) {
     //   (done) => { bolt.readFwVer(done); },
       (done) => { bolt.readEffectSetting(done); },
       (done) => { bolt.readColorFlow(done); },
-      (done) => { bolt.setState(!bolt.state.state, done); },
+      (done) => {
+        bolt.state.red = (bolt.state.red + 10) % 256;
+        bolt.state.green = (bolt.state.green + 50) % 256;
+        bolt.state.blue = (bolt.state.blue + 50) % 256;
+        bolt.setState(true, done);
+      },
     ], (error, values) => {
-      if (error) {
+      if (error && !error.code) {
         console.log(error);
       } else {
         console.log(values);

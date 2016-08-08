@@ -495,6 +495,18 @@ Bolt.prototype.readColorFlow = function (done) {
   return this;
 };
 
+/**
+ * Returns raw content of name uuid, which is mostly "NF,,,,,,,,,,,,,"
+ */
+Bolt.prototype.readNameUuid = function (done) {
+  this._read(NAME_UUID, done, true);
+  return this;
+}
+
+/**
+ * readName returns Bolt name
+ * Must set name uuid in order to trigger name notify
+ */
 Bolt.prototype.readName = function (done) {
   debug(`readName`);
   this.notifyName( (error) => {
@@ -505,9 +517,7 @@ Bolt.prototype.readName = function (done) {
           done(error);
           return;
         }
-        this._readTimeout = setTimeout(() => {
-          this._readNameCallback(new Error('Timeout while readName'));
-        }, 2000);
+        this._readNameSetupTimeout('1st notify');
       });
     } else done(error);
   });
@@ -525,6 +535,15 @@ Bolt.prototype.unnotifyName = function(callback) {
   this.notifyCharacteristic(SERVICE_UUID, NAME_NOTIFY_CHARID, false, this.onNameNotifyBinded, callback);
 };
 
+Bolt.prototype._readNameSetupTimeout = function(message) {
+  this._readTimeout = setTimeout(() => {
+    var error = new Error('readName timeout: ' + message);
+    debug(error.message);
+    error.code = 0xE0;
+    this._readNameCallback(error, this.name);
+  }, 2000);
+}
+
 Bolt.prototype.onNameNotify = function(data) {
     if (!data) return;
     let dataStr = data.toString();
@@ -535,10 +554,7 @@ Bolt.prototype.onNameNotify = function(data) {
       debug('_readNameCallback "' + this.name + '"');
       this._readNameCallback(undefined, this.name);
     } else {
-      this._readTimeout = setTimeout(() => {
-        debug('readName: timeout');
-        this._readNameCallback(new Error('readName: timeout'), this.name);
-      }, 2000);
+      this._readNameSetupTimeout('notify');
 
       let strArray = dataStr.split(',');
       if (!strArray || strArray.length < 2) {
