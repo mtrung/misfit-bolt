@@ -53,17 +53,23 @@ function onConnect(bolt) {
     });
 }
 
+var connectedCount = 0;
 // Discover every nearby Bolt
 console.log("Discovering ...");
-Bolt.discover(function(bolt) {
+Bolt.discoverAll(function(bolt) {
   console.log("- discovered " + bolt.id + ' ' + bolt.address);
 
   bolt.on('disconnect', function() {
-      process.exit(0);
+      connectedCount--;
+      console.log('len='+connectedCount);
+      if (connectedCount == 0) {
+        process.exit(0);
+      }
   });
 
   // Each time a bolt is discovered, connect to it
   bolt.connectAndSetUp(function(error) {
+    connectedCount++;
     onConnect(bolt);
   });
 });
