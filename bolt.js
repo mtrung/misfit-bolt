@@ -1,7 +1,6 @@
 Bolt = require('.');
 async = require('async');
 
-
 function setColorInInterval(bolt) {
     var i = 0,
         colors = [[228,41,15,10],
@@ -19,9 +18,6 @@ function setColorInInterval(bolt) {
     }, 500);
 }
 
-function done2(key, value) {
-    console.log(key+' = '+value);
-}
 function done(error, value) {
     console.log('value = '+value);
 }
@@ -32,15 +28,19 @@ function onConnect(bolt) {
     async.series([
       (done) => { bolt.getRGBA(done); },
     //   (done) => { bolt.getHSB(done); },
-      (done) => { bolt.readName(done); },
+      (done) => {
+        console.log('HSB='+bolt.state.hsb);
+        bolt.readName(done); },
     //   (done) => { bolt.readFwVer(done); },
       (done) => { bolt.readEffectSetting(done); },
       (done) => { bolt.readColorFlow(done); },
+      (done) => { bolt.setDelayOnOff(1, false, done); },
       (done) => {
         bolt.state.red = (bolt.state.red + 10) % 256;
         bolt.state.green = (bolt.state.green + 50) % 256;
         bolt.state.blue = (bolt.state.blue + 50) % 256;
-        bolt.setState(true, done);
+        // bolt.state.brightness = (bolt.state.brightness + 50) % 101;
+        bolt.setBrightness((bolt.state.brightness + 50) % 101, done);
       },
     ], (error, values) => {
       if (error && !error.code) {

@@ -4,7 +4,8 @@
 const debug = require('debug')(require('./package').name),
       State = require('./lib/state'),
       NobleDevice = require('noble-device'),
-      assertFunction = require('./lib/util').assertFunction;
+      assertFunction = require('./lib/util').assertFunction,
+      padEnd = require('./lib/util').padEnd;
 
 
 // Constants
@@ -318,6 +319,15 @@ Bolt.prototype.setEffectSetting = function (effectSetting, done) {
   return this;
 };
 
+
+Bolt.prototype.setDelayOnOff = function (minuteNum, isOn, done) {
+  // debug(`effectSetting -> ${effectSetting}`);
+  let S = isOn ? '1' : '0';
+  let str = minuteNum.toString() + ',' + S;
+  str = padEnd(str, 8, ',');
+  this._write(DELAY_ON_OFF_UUID, new Buffer(str), done);
+  return this;
+};
 
 /**
  * Retrieve Name value of the bolt (as visible by the Bluetooth client).
