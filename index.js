@@ -11,12 +11,15 @@ const debug = require('debug')(require('./package').name),
 const ADVERTISEMENT_NAME = 'MFBOLT',
       SERVICE_UUID = 'fff0',
       CONTROL_UUID = 'fff1',
-      COLOR_FLOW_CHARID = 'fff7',
-
-      FW_VER_UUID = 'fffd',
+      DELAY_ON_OFF_UUID = 'fff2',
+      DELAY_ON_OFF_STATUS_QUERY_UUID = 'fff3',
+      DELAY_ON_OFF_STATUS_RESPONSE_UUID = 'fff4',
+      STATUS_QUERY_UUID = 'fff5',
+      STATUS_RESPONSE_UUID = 'fff6',
+      COLOR_FLOW_UUID = 'fff7',
 
       NAME_UUID = 'fff8',
-      NAME_NOTIFY_CHARID = 'fff9',
+      NAME_RESPONSE_UUID = 'fff9',
       NAME_QUERY = 'NF,,,,,,,,,,,,,',
       NAME_END   = 'NEND',//'NEND,,,,,,,,,,,',
       NAME_START = 'N 0',
@@ -25,6 +28,8 @@ const ADVERTISEMENT_NAME = 'MFBOLT',
       GRADUAL_MODE = 'TS',
       NON_GRADUAL_MODE = 'TE',
       PERSIST_DEFAULT_COLOR = 'DF',
+
+      FW_VER_UUID = 'fffd',
 
       DELAYED_WRITE_MS = 500,
       DELAYED_PERSIST_MS = 1000,
@@ -491,7 +496,7 @@ Bolt.prototype.readFwVer = function (done) {
 };
 
 Bolt.prototype.readColorFlow = function (done) {
-  this._read(COLOR_FLOW_CHARID, done);
+  this._read(COLOR_FLOW_UUID, done);
   return this;
 };
 
@@ -527,12 +532,12 @@ Bolt.prototype.notifyName = function(callback) {
   // debug('notifyName');
   this.onNameNotifyBinded = this.onNameNotify.bind(this);
   // notifyCharacteristic has 1 param error
-  this.notifyCharacteristic(SERVICE_UUID, NAME_NOTIFY_CHARID, true, this.onNameNotifyBinded, callback);
+  this.notifyCharacteristic(SERVICE_UUID, NAME_RESPONSE_UUID, true, this.onNameNotifyBinded, callback);
 };
 
 Bolt.prototype.unnotifyName = function(callback) {
   debug('unnotifyName');
-  this.notifyCharacteristic(SERVICE_UUID, NAME_NOTIFY_CHARID, false, this.onNameNotifyBinded, callback);
+  this.notifyCharacteristic(SERVICE_UUID, NAME_RESPONSE_UUID, false, this.onNameNotifyBinded, callback);
 };
 
 Bolt.prototype._readNameSetupTimeout = function(message) {
