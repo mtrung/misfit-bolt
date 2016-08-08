@@ -27,20 +27,18 @@ function onConnect(bolt) {
 
     async.series([
       (done) => { bolt.getRGBA(done); },
-    //   (done) => { bolt.getHSB(done); },
-      (done) => {
-        console.log('HSB='+bolt.state.hsb);
-        bolt.readName(done); },
+      // (done) => {
+      //   console.log('HSB='+bolt.state.hsb);
+      //   bolt.readName(done); },
     //   (done) => { bolt.readFwVer(done); },
-      (done) => { bolt.readEffectSetting(done); },
-      (done) => { bolt.readColorFlow(done); },
-      (done) => { bolt.setDelayOnOff(1, false, done); },
+      // (done) => { bolt.readEffectSetting(done); },
+      // (done) => { bolt.readColorFlow(done); },
+      (done) => { bolt.setDelayOnOff(5, false, done); },
       (done) => {
-        bolt.state.red = (bolt.state.red + 10) % 256;
-        bolt.state.green = (bolt.state.green + 50) % 256;
-        bolt.state.blue = (bolt.state.blue + 50) % 256;
-        // bolt.state.brightness = (bolt.state.brightness + 50) % 101;
-        bolt.setBrightness((bolt.state.brightness + 50) % 101, done);
+        bolt.state.red = (bolt.state.red + 10) % 192;
+        bolt.state.green = (bolt.state.green + 50) % 100;
+        bolt.state.blue = (bolt.state.blue + 50) % 100;
+        bolt.setBrightness((bolt.state.brightness + 10) % 31, done);
       },
     ], (error, values) => {
       if (error && !error.code) {
