@@ -513,6 +513,12 @@ Bolt.prototype.readColorFlow = function (done) {
   return this;
 };
 
+Bolt.prototype._writeColorFlowSingle = function (msg, done) {
+  this._write(COLOR_FLOW_UUID, new Buffer(msg), done);
+  return this;
+};
+
+
 /**
  * Returns raw content of name uuid, which is mostly "NF,,,,,,,,,,,,,"
  */
